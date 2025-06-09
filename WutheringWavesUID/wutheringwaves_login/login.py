@@ -1,31 +1,30 @@
-import asyncio
-import hashlib
 import re
 import uuid
+import asyncio
+import hashlib
 from pathlib import Path
 from typing import Union
 
 import httpx
-from async_timeout import timeout
-from pydantic import BaseModel
-from starlette.responses import HTMLResponse
-
 from gsuid_core.bot import Bot
-from gsuid_core.config import core_config
-from gsuid_core.logger import logger
+from pydantic import BaseModel
+from async_timeout import timeout
+from gsuid_core.web_app import app
 from gsuid_core.models import Event
+from gsuid_core.logger import logger
+from gsuid_core.config import core_config
+from starlette.responses import HTMLResponse
 from gsuid_core.segment import MessageSegment
 from gsuid_core.utils.cookie_manager.qrlogin import get_qrcode_base64
-from gsuid_core.web_app import app
 
 from ..utils.cache import TimedCache
+from ..utils.util import get_public_ip
+from ..wutheringwaves_user import deal
+from ..utils.waves_api import waves_api
 from ..utils.database.models import WavesBind, WavesUser
 from ..utils.resource.RESOURCE_PATH import waves_templates
-from ..utils.util import get_public_ip
-from ..utils.waves_api import waves_api
-from ..wutheringwaves_config import PREFIX, WutheringWavesConfig
-from ..wutheringwaves_user import deal
 from ..wutheringwaves_user.login_succ import login_success_msg
+from ..wutheringwaves_config import PREFIX, WutheringWavesConfig
 
 cache = TimedCache(timeout=600, maxsize=10)
 
@@ -197,7 +196,7 @@ async def page_login_other(bot: Bot, ev: Event, url):
                         return await bot.send(msg_error, at_sender=at_sender)
 
 
-async def page_login(bot: Bot, ev: Event):
+async def page_login(bot: Bot, ev: Event, isH5Login: bool = False):
     url, is_local = await get_url()
 
     if is_local:
