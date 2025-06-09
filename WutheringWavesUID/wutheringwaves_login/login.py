@@ -136,7 +136,7 @@ async def page_login_local(bot: Bot, ev: Event, url, isH5Login: bool = False):
     except Exception as e:
         logger.error(e)
 
-    return await code_login(bot, ev, text, True, isH5Login)
+    return await code_login(bot, ev, text, True, isH5Login=isH5Login)
 
 
 async def page_login_other(bot: Bot, ev: Event, url):
