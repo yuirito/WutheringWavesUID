@@ -836,7 +836,7 @@ class WavesApi:
             return res
         return {}
 
-    async def login(self, mobile: int | str, code: str, did: str):
+    async def login(self, mobile: int | str, code: str, did: str, isH5Login: bool = False):
         platform = login_platform()
         header = await get_headers(platform=platform)
         data = {
@@ -844,7 +844,7 @@ class WavesApi:
             "code": code,
             "devCode": did,
         }
-        if platform == "h5":
+        if isH5Login:
             url = LOGIN_H5_URL
         else:
             url = LOGIN_URL

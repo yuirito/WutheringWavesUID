@@ -109,7 +109,7 @@ async def send_login(bot: Bot, ev: Event, url):
             await bot.send("\n".join(im), at_sender=at_sender)
 
 
-async def page_login_local(bot: Bot, ev: Event, url):
+async def page_login_local(bot: Bot, ev: Event, url, isH5Login: bool = False):
     at_sender = True if ev.group_id else False
     user_token = get_token(ev.user_id)
     await send_login(bot, ev, f"{url}/waves/i/{user_token}")
@@ -136,7 +136,7 @@ async def page_login_local(bot: Bot, ev: Event, url):
     except Exception as e:
         logger.error(e)
 
-    return await code_login(bot, ev, text, True)
+    return await code_login(bot, ev, text, True, isH5Login)
 
 
 async def page_login_other(bot: Bot, ev: Event, url):
@@ -200,12 +200,12 @@ async def page_login(bot: Bot, ev: Event, isH5Login: bool = False):
     url, is_local = await get_url()
 
     if is_local:
-        return await page_login_local(bot, ev, url)
+        return await page_login_local(bot, ev, url, isH5Login)
     else:
         return await page_login_other(bot, ev, url)
 
 
-async def code_login(bot: Bot, ev: Event, text: str, isPage=False):
+async def code_login(bot: Bot, ev: Event, text: str, isPage=False, isH5Login: bool = False):
     at_sender = True if ev.group_id else False
     game_title = "[鸣潮]"
     # 手机+验证码
@@ -220,7 +220,7 @@ async def code_login(bot: Bot, ev: Event, text: str, isPage=False):
         )
 
     did = str(uuid.uuid4()).upper()
-    result = await waves_api.login(phone_number, code, did)
+    result = await waves_api.login(phone_number, code, did, isH5Login)
     if (
         not isinstance(result, dict)
         or result.get("code") != 200
