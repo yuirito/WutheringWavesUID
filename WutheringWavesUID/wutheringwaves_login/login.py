@@ -135,6 +135,11 @@ async def page_login_local(bot: Bot, ev: Event, url, isH5Login: bool = False):
         return await bot.send("登录超时!\n", at_sender=at_sender)
     except Exception as e:
         logger.error(e)
+    if isH5Login:
+        await bot.send(f"使用h5登录中! 请稍后...\n", at_sender=at_sender)
+    else:
+        await bot.send(f"使用ios登录中! 请稍后...\n", at_sender=at_sender)
+    
 
     return await code_login(bot, ev, text, True, isH5Login=isH5Login)
 

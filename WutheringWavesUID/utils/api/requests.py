@@ -838,6 +838,8 @@ class WavesApi:
 
     async def login(self, mobile: int | str, code: str, did: str, isH5Login: bool = False):
         platform = login_platform()
+        if isH5Login:
+            platform = "h5"
         header = await get_headers(platform=platform)
         data = {
             "mobile": mobile,
