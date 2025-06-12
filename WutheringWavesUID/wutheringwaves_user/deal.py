@@ -13,7 +13,13 @@ from ..utils.waves_api import waves_api
 
 async def add_cookie(ev: Event, ck: str, did: str) -> str:
     succ, platform, kuroWavesUserInfos = await waves_api.get_kuro_role_list(ck)
-    if not succ or not isinstance(kuroWavesUserInfos, list):
+    if not succ:
+        if isinstance(kuroWavesUserInfos, str):
+            return hint.error_reply(msg=kuroWavesUserInfos)
+        else:
+            return hint.error_reply(code=WAVES_CODE_101)
+
+    if not isinstance(kuroWavesUserInfos, list):
         return hint.error_reply(code=WAVES_CODE_101)
 
     role_list = []
@@ -114,8 +120,7 @@ async def get_cookie(bot: Bot, ev: Event) -> Union[List[str], str]:
         if not ck:
             continue
         msg.append(f"鸣潮uid: {uid}")
-        msg.append(f"token: {waves_user.cookie}")
-        msg.append(f"did: {waves_user.did}")
+        msg.append(f"token, did: {waves_user.cookie}, {waves_user.did}")
         msg.append("--------------------------------")
 
     if not msg:
