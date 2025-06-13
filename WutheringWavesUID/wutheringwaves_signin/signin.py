@@ -20,6 +20,7 @@ def get_game_headers(ck: str) -> dict[str, str]:
         "token": ck,
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) KuroGameBox/2.2.0",
         "Connection": "keep-alive",
+        "content-type": "application/x-www-form-urlencoded; charset=utf-8"
     }
     return headers
 
