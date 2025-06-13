@@ -26,7 +26,9 @@ async def send_waves_get_ck_msg(bot: Bot, ev: Event):
     if not uid_ck_dict:
         await bot.send("您当前未绑定token或者token已全部失效\n")
         return
-    for uid, ck in uid_ck_dict.items():
-        msg = game_signin(uid=uid, ck=ck)
+    for uid, ck_did in uid_ck_dict.items():
+        ck = ck_did["ck"]
+        did = ck_did["did"]
+        msg = game_signin(uid=uid, ck=ck, did =did)
         await bot.send(f"uid:{uid}签到结果："+msg)
 

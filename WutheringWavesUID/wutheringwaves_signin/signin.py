@@ -1,9 +1,9 @@
 from typing import Any
-
+import datetime
 import requests
 
 
-def get_game_headers(ck: str) -> dict[str, str]:
+def get_game_headers(ck: str, did: str) -> dict[str, str]:
     """
     生成游戏签到请求头
     :return: 请求头字典
@@ -18,6 +18,7 @@ def get_game_headers(ck: str) -> dict[str, str]:
         "Accept-Encoding": "gzip, deflate, br",
         "Sec-Fetch-Mode": "cors",
         "token": ck,
+        "devCode": did,
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) KuroGameBox/2.2.0",
         "Connection": "keep-alive",
         "content-type": "application/x-www-form-urlencoded; charset=utf-8"
@@ -25,7 +26,7 @@ def get_game_headers(ck: str) -> dict[str, str]:
     return headers
 
 
-def bbssignin(ck: str) -> str:
+def bbssignin(ck: str, did: str) -> str:
     """
     执行库街区签到
     :return: 签到结果或错误信息
@@ -37,7 +38,7 @@ def bbssignin(ck: str) -> str:
     try:
         url = "https://api.kurobbs.com/user/signIn"
         data = {"gameId": "2"}
-        response = requests.post(url, headers=get_game_headers(ck), data=data)
+        response = requests.post(url, headers=get_game_headers(ck,did), data=data)
         response.raise_for_status()
         resp_data: dict[str, Any] = response.json()
         if resp_data["code"] == 200:
@@ -49,7 +50,7 @@ def bbssignin(ck: str) -> str:
         error_message = f"签到失败: {e}"
         return "ERROR:" + error_message
 
-def get_user_info_by_token(ck: str) -> str:
+def get_user_info_by_token(ck: str, did: str) -> str:
     """
     根据 token 和用户 ID 获取用户信息
     :param token: 用户的 token
@@ -61,7 +62,7 @@ def get_user_info_by_token(ck: str) -> str:
     url = "https://api.kurobbs.com/user/mineV2"
     
     try:
-        response = requests.post(url, headers=get_game_headers(ck = ck))
+        response = requests.post(url, headers=get_game_headers(ck = ck, did=did))
         response.raise_for_status()
         result = response.json()
 
@@ -74,11 +75,9 @@ def get_user_info_by_token(ck: str) -> str:
     except requests.RequestException as e:
         return ""
 
-def get_sign_prize(role_id, user_id, ck):
+def get_sign_prize(role_id, user_id, ck, did):
     """
     获取签到奖励
-    :param game_id: 游戏 ID
-    :param server_id: 服务器 ID
     :param role_id: 角色 ID
     :param user_id: 用户 ID
     :return: 奖励名称或错误信息
@@ -95,7 +94,7 @@ def get_sign_prize(role_id, user_id, ck):
             "roleId": role_id,
             "userId": user_id
         }
-        response = requests.post(url, headers=get_game_headers(ck=ck), data=data)
+        response = requests.post(url, headers=get_game_headers(ck=ck, did=did), data=data)
         response.raise_for_status()
         response_data = response.json()
         if response_data.get("code") != 200:
@@ -111,8 +110,61 @@ def get_sign_prize(role_id, user_id, ck):
         error_message = f"ERROR:获取签到奖励失败: {e}"
         return error_message
 
-def game_signin(uid:str, ck:str) -> str:
-    user_id = get_user_info_by_token(ck)
+def sign_in(role_id, user_id, ck, did):
+        """
+        执行游戏签到
+        :param game_id: 游戏 ID
+        :param role_id: 角色 ID
+        :param user_id: 用户 ID
+        :param month: 当前月份
+        :param auto_reple_sign: 是否自动补签
+        :return: 签到结果或错误信息
+        日志记录：
+            - debug: 游戏签到响应
+            - info: 签到成功或已签到
+            - error: 签到失败
+        """
+        try:
+            url = "https://api.kurobbs.com/encourage/signIn/v2"
+            game_name = "鸣潮"
+            data = {
+                "gameId": 3,
+                "serverId": "76402e5b20be2c39f095a152090afddc",
+                "roleId": role_id,
+                "userId": user_id,
+                "reqMonth": datetime.datetime.now().strftime("%m")
+            }
+    
+            response = requests.post(url, headers=get_game_headers(ck, did), data=data)
+            response.raise_for_status()
+            response_data = response.json()
+            code = response_data.get("code")
+            result = ""
+            
+            if code == 200:
+                # 如果成功，调用 get_sign_prize 获取奖励列表
+                goods_names = get_sign_prize(role_id, user_id, ck, did)
+                
+                result = f"签到成功，签到奖励: {goods_names}"
+            elif code == 1511:
+                goods_names = get_sign_prize(role_id, user_id, ck, did)
+                result = f"{game_name}今天已签到，签到奖励: {goods_names}"
+            elif code == 1513:
+                return f"ERROR:{game_name}签到报错：用户信息异常"
+            elif code == 220:
+                return f"ERROR:{game_name}签到报错：登录已过期，请重新登录"
+            else:
+                error_message = f"{game_name}签到失败，响应代码: {code}, 消息: {response_data.get('msg')}"
+                return "ERROR:"+error_message
+        
+            
+            return result
+        except Exception as e:
+            error_message = f"签到失败: {e}"
+            return "ERROR:"+error_message
+
+def game_signin(uid:str, ck:str, did:str) -> str:
+    user_id = get_user_info_by_token(ck, did)
     if user_id == "":
         return "获取用户UserId失败"
-    return get_sign_prize(role_id=uid, user_id=user_id, ck = ck)
+    return sign_in(role_id=uid, user_id=user_id, ck = ck, did = did)
