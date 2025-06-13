@@ -1,3 +1,5 @@
+from typing import Any
+
 import requests
 
 
@@ -27,7 +29,7 @@ def get_bbs_headers(ck: str) -> dict[str, str]:
     }
 
 
-def bbssignin(ck: str):
+def bbssignin(ck: str) -> str:
     """
     执行库街区签到
     :return: 签到结果或错误信息
@@ -41,10 +43,12 @@ def bbssignin(ck: str):
         data = {"gameId": "2"}
         response = requests.post(url, headers=get_bbs_headers(ck), data=data)
         response.raise_for_status()
-        if response.json()["code"] == 200:
+        resp_data: dict[str, Any] = response.json()
+        if resp_data["code"] == 200:
             return "签到成功"
         else:
-            return "ERROR:签到失败"
+            msg: str = str(resp_data.get("msg", "未知错误"))
+            return f"签到失败: {msg}"
     except Exception as e:
         error_message = f"签到失败: {e}"
         return "ERROR:" + error_message
