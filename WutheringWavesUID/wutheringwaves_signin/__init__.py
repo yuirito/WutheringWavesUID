@@ -8,7 +8,7 @@ from gsuid_core.models import Event
 from ..utils.database.models import  WavesUser
 sv_kuro_sign_in = SV("库街区签到")
 
-@scheduler.scheduled_job("cron", hour=2, minute=15)
+@scheduler.scheduled_job("cron", hour=2, minute=25)
 async def auto_signin():
     wavesTokenUsers = await WavesUser.get_waves_all_user()
     msg: list[str] = []
@@ -16,18 +16,20 @@ async def auto_signin():
         ck= w.cookie
         uid = w.uid
         did = w.did
-        msg.append(game_signin(uid = uid, ck = ck, did = did))
+        msg.append(f"uid:{uid}签到结果："+game_signin(uid = uid, ck = ck, did = did))
     result_msg = "自动签到结果：\n" + "\n".join(msg)
 
-    for bot_id in gss.active_bot:
-        await gss.active_bot[bot_id].target_send(
-            result_msg,
-            "group",
-            "718927461",
-            "onebot",
-            "3248755428",
-            "",
-        )
+    notify_groups = ["718927461","594918736"]
+    for gp in notify_groups:
+        for bot_id in gss.active_bot:
+            await gss.active_bot[bot_id].target_send(
+                result_msg,
+                "group",
+                gp,
+                "onebot",
+                "3248755428",
+                "",
+            )
 
 @sv_kuro_sign_in.on_command(("签到", "signin", "checkin", "千岛"))
 async def send_waves_get_ck_msg(bot: Bot, ev: Event):
