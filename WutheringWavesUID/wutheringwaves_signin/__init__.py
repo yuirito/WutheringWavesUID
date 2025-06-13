@@ -5,18 +5,27 @@ from .deal import get_cookie
 from .signin import game_signin
 from gsuid_core.bot import Bot
 from gsuid_core.models import Event
-
+from ..utils.database.models import  WavesUser
 sv_kuro_sign_in = SV("库街区签到")
 
-@scheduler.scheduled_job("cron", hour=0, minute=1)
+@scheduler.scheduled_job("cron", hour=2, minute=15)
 async def auto_signin():
+    wavesTokenUsers = await WavesUser.get_waves_all_user()
+    msg: list[str] = []
+    for w in wavesTokenUsers:
+        ck= w.cookie
+        uid = w.uid
+        did = w.did
+        msg.append(game_signin(uid = uid, ck = ck, did = did))
+    result_msg = "自动签到结果：\n" + "\n".join(msg)
+
     for bot_id in gss.active_bot:
         await gss.active_bot[bot_id].target_send(
-            "定时任务测试",
+            result_msg,
             "group",
             "718927461",
             "onebot",
-            "",
+            "3248755428",
             "",
         )
 

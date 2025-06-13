@@ -31,3 +31,5 @@ async def get_cookie(bot: Bot, ev: Event) -> dict[str, dict[str,str]]:
         uid_ck_dict[uid]["ck"] = waves_user.cookie
         uid_ck_dict[uid]["did"] = waves_user.did
     return uid_ck_dict
+
+
