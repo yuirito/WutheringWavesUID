@@ -16,7 +16,7 @@ async def get_cookie(bot: Bot, ev: Event) -> dict[str, str]:
     if uid_list is None:
         return {}
 
-    ck_did_dict: dict[str, str] = {}
+    uid_ck_dict: dict[str, str] = {}
     for uid in uid_list:
         waves_user: Optional[WavesUser] = await WavesUser.select_waves_user(
             uid, ev.user_id, ev.bot_id
@@ -27,6 +27,5 @@ async def get_cookie(bot: Bot, ev: Event) -> dict[str, str]:
         ck = await waves_api.get_self_waves_ck(uid, ev.user_id, ev.bot_id)
         if not ck:
             continue
-        ck_did_dict[waves_user.cookie] = waves_user.did
-
-    return ck_did_dict
+        uid_ck_dict[uid] = waves_user.cookie
+    return uid_ck_dict

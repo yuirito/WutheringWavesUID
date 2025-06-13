@@ -2,7 +2,7 @@ from gsuid_core.aps import scheduler
 from gsuid_core.gss import gss
 from gsuid_core.sv import SV
 from .deal import get_cookie
-from .signin import bbssignin
+from .signin import game_signin
 from gsuid_core.bot import Bot
 from gsuid_core.models import Event
 
@@ -22,11 +22,11 @@ async def auto_signin():
 
 @sv_kuro_sign_in.on_command(("签到", "signin", "checkin", "千岛"))
 async def send_waves_get_ck_msg(bot: Bot, ev: Event):
-    ck_did_dict = await get_cookie(bot, ev)
-    if not ck_did_dict:
+    uid_ck_dict = await get_cookie(bot, ev)
+    if not uid_ck_dict:
         await bot.send("您当前未绑定token或者token已全部失效\n")
         return
-    for ck, did in ck_did_dict.items():
-        msg = bbssignin(ck=ck)
-        await bot.send(msg)
+    for uid, ck in uid_ck_dict.items():
+        msg = game_signin(uid=uid, ck=ck)
+        await bot.send(f"uid:{uid}签到结果："+msg)
 
