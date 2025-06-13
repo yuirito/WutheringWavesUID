@@ -27,6 +27,7 @@ async def get_cookie(bot: Bot, ev: Event) -> dict[str, dict[str,str]]:
         ck = await waves_api.get_self_waves_ck(uid, ev.user_id, ev.bot_id)
         if not ck:
             continue
+        uid_ck_dict[uid]={}
         uid_ck_dict[uid]["ck"] = waves_user.cookie
         uid_ck_dict[uid]["did"] = waves_user.did
     return uid_ck_dict
