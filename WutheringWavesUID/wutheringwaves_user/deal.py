@@ -12,7 +12,7 @@ from ..utils.waves_api import waves_api
 
 
 async def add_cookie(ev: Event, ck: str, did: str) -> str:
-    succ, platform, kuroWavesUserInfos = await waves_api.get_kuro_role_list(ck, did)
+    succ, platform, kuroWavesUserInfos = await waves_api.get_kuro_role_list(ck)
     if not succ:
         if isinstance(kuroWavesUserInfos, str):
             return hint.error_reply(msg=kuroWavesUserInfos)
@@ -32,11 +32,15 @@ async def add_cookie(ev: Event, ck: str, did: str) -> str:
             ev.user_id, ev.bot_id, "uid", data.roleId
         )
 
-        succ, bat = await waves_api.get_request_token(
-            data.roleId, ck, did, data.serverId
-        )
-        if not succ or not bat:
-            return bat
+        bat = ""
+        if user and user.bat:
+            bat = user.bat
+        else:
+            succ, bat = await waves_api.get_request_token(
+                data.roleId, ck, did, data.serverId
+            )
+            if not succ or not bat:
+                return bat
 
         if user:
             await WavesUser.update_data_by_data(

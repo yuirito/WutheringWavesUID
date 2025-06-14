@@ -87,9 +87,6 @@ async def _check_response(
         if res_code == 200 and res_data:
             return True, res_data
 
-        if res_code == 10902 and res_data:
-            return True, res_data
-
         if res_msg and (res_msg == "请求成功" or res_msg == "系统繁忙，请稍后再试"):
             msg = f"\n鸣潮账号id: 【{roleId}】未绑定库街区!!!\n1.是否注册过库街区\n2.库街区能否查询当前鸣潮账号数据\n"
             return False, error_reply(None, msg)
@@ -121,7 +118,6 @@ async def _check_response(
 
 
 KURO_VERSION = "2.5.0"
-KURO_VERSION_CODE = "2500"
 
 
 async def get_common_header(platform: str = "ios"):
@@ -317,17 +313,11 @@ class WavesApi:
             return random.choices(ck_list, k=1)[0]
 
     async def get_kuro_role_list(
-        self, token: str, did: str
+        self, token: str
     ) -> tuple[bool, str, Union[List, str, int]]:
         platform = login_platform()
         header = await get_common_header(platform=platform)
-        header.update(
-            {
-                "token": token,
-                "devCode": did,
-            }
-        )
-
+        header.update({"token": token})
         data = {"gameId": GAME_ID}
 
         err_msg = error_reply(WAVES_CODE_999)
@@ -405,7 +395,7 @@ class WavesApi:
             if succ:
                 header["b-at"] = b_at
             else:
-                return False, b_at or error_reply(WAVES_CODE_990)
+                return False, error_reply(WAVES_CODE_990)
         data = {
             "gameId": GAME_ID,
             "serverId": self.get_server_id(roleId, serverId),
@@ -426,7 +416,7 @@ class WavesApi:
             if succ:
                 header["b-at"] = b_at
             else:
-                return False, b_at or error_reply(WAVES_CODE_990)
+                return False, error_reply(WAVES_CODE_990)
         data = {
             "gameId": GAME_ID,
             "serverId": self.get_server_id(roleId, serverId),
@@ -463,7 +453,7 @@ class WavesApi:
             if succ:
                 header["b-at"] = b_at
             else:
-                return False, b_at or error_reply(WAVES_CODE_990)
+                return False, error_reply(WAVES_CODE_990)
         data = {
             "gameId": GAME_ID,
             "serverId": self.get_server_id(roleId, serverId),
@@ -488,7 +478,7 @@ class WavesApi:
             if succ:
                 header["b-at"] = b_at
             else:
-                return False, b_at or error_reply(WAVES_CODE_990)
+                return False, error_reply(WAVES_CODE_990)
         data = {
             "gameId": GAME_ID,
             "serverId": self.get_server_id(roleId, serverId),
@@ -516,7 +506,7 @@ class WavesApi:
             if succ:
                 header["b-at"] = b_at
             else:
-                return False, b_at or error_reply(WAVES_CODE_990)
+                return False, error_reply(WAVES_CODE_990)
         data = {
             "gameId": GAME_ID,
             "serverId": self.get_server_id(roleId, serverId),
@@ -541,7 +531,7 @@ class WavesApi:
             if succ:
                 header["b-at"] = b_at
             else:
-                return False, b_at or error_reply(WAVES_CODE_990)
+                return False, error_reply(WAVES_CODE_990)
         data = {
             "gameId": GAME_ID,
             "serverId": self.get_server_id(roleId, serverId),
@@ -578,7 +568,7 @@ class WavesApi:
             if succ:
                 header["b-at"] = b_at
             else:
-                return b_at or error_reply(WAVES_CODE_990)
+                return error_reply(WAVES_CODE_990)
         data = {
             "gameId": GAME_ID,
             "serverId": self.get_server_id(roleId, serverId),
@@ -599,7 +589,7 @@ class WavesApi:
             if succ:
                 header["b-at"] = b_at
             else:
-                return b_at or error_reply(WAVES_CODE_990)
+                return error_reply(WAVES_CODE_990)
         data = {
             "gameId": GAME_ID,
             "serverId": self.get_server_id(roleId, serverId),
@@ -632,20 +622,18 @@ class WavesApi:
         header.update(
             {
                 "token": token,
-                # "Access-Control-Request-Header": "b-at,devcode,did,source,token",
+                "Access-Control-Request-Header": "b-at,devcode,did,source,token",
                 "did": did,
             }
         )
         header["b-at"] = ""
-        # header.pop("X-Forwarded-For", None)
+        # del header["X-Forwarded-For"]
         data = {
             "serverId": self.get_server_id(roleId, serverId),
             "roleId": roleId,
         }
         raw_data = await self._waves_request(REQUEST_TOKEN, "POST", header, data=data)
-        if isinstance(raw_data, dict) and (
-            raw_data.get("code") == 200 or raw_data.get("code") == 10902
-        ):
+        if isinstance(raw_data, dict) and raw_data.get("code") == 200:
             content_data = raw_data.get("data")
             access_token = ""
             if isinstance(content_data, str):
@@ -665,7 +653,6 @@ class WavesApi:
                 self.bat_map[roleId] = access_token
                 return True, access_token
         else:
-            logger.warning(f"[{roleId}] 获取bat失败: {raw_data}")
             if isinstance(raw_data, dict):
                 return False, raw_data.get("msg", "") or ""
             else:
