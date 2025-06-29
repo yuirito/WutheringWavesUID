@@ -119,12 +119,13 @@ async def send_images(bot: Bot, ev: Event):
             img_num = int(text)
         else:
             img_num = 5
+        img_num = min(10, img_num)
 
         # 获取今天的日期
         today = datetime.datetime.now().strftime("%Y%m%d")
 
-        # 找到最接近今天的文件夹（最多5个文件夹）
-        closest_folders = find_closest_date_folders(today, 5)
+        # 找到最接近今天的文件夹
+        closest_folders = find_closest_date_folders(today, img_num)
 
         if not closest_folders:
             await bot.send("未找到任何图片文件夹")
@@ -157,6 +158,7 @@ async def send_images_roll(bot: Bot, ev: Event):
             img_num = int(text)
         else:
             img_num = 5
+        img_num = min(10, img_num)
 
         # 随机选择文件夹（最多10个文件夹以提高性能）
         random_folders = select_random_folders(min(10, len(get_date_folders())))
