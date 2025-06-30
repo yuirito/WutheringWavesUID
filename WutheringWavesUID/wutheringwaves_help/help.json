@@ -477,12 +477,12 @@
     ]
   },
   "额外功能": {
-    "desc": "fdst n从最近n天查找随机涩图，今日涩图 m n从最近的一天每页n个查找第m页，随机涩图从全图库roll",
+    "desc": "fdst n最近n天随机n张，今日涩图 m n最近一天每页n个第m页，随机涩图全图库roll",
     "data": [
       {
         "name": "fdst",
         "desc": "",
-        "eg": "wwfdst 5",
+        "eg": "fdst 5",
         "need_ck": false,
         "need_sk": false,
         "need_admin": false
