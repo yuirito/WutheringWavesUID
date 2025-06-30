@@ -476,6 +476,35 @@
       }
     ]
   },
+  "额外功能": {
+    "desc": "fdst n从最近n天查找随机涩图，今日涩图 m n从最近的一天每页n个查找第m页，随机涩图从全图库roll",
+    "data": [
+      {
+        "name": "fdst",
+        "desc": "",
+        "eg": "wwfdst 5",
+        "need_ck": false,
+        "need_sk": false,
+        "need_admin": false
+      },
+      {
+        "name": "今日涩图",
+        "desc": "",
+        "eg": "今日涩图 1 5",
+        "need_ck": false,
+        "need_sk": false,
+        "need_admin": false
+      },
+      {
+        "name": "随机涩图",
+        "desc": "",
+        "eg": "随机涩图",
+        "need_ck": false,
+        "need_sk": false,
+        "need_admin": false
+      }
+    ]
+  },
   "群管理员功能": {
     "pm": 3,
     "desc": "群管理员功能",
