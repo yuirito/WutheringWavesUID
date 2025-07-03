@@ -128,6 +128,7 @@ class DamageAttribute:
         skill_ratio_in_skill_description=0,
         dmg_bonus=0,
         dmg_deepen=0,
+        easy_damage=0,
         crit_rate=0,
         crit_dmg=0,
         character_level=0,
@@ -139,7 +140,7 @@ class DamageAttribute:
         char_attr=None,
         sync_strike=False,
         energy_regen=0,
-        char_damage="",
+        char_damage=None,
         enemy_level=90,
         teammate_char_ids: Optional[List[int]] = None,
         env_spectro=False,
@@ -178,7 +179,7 @@ class DamageAttribute:
             teammate_char_ids = []
         self.role: Optional[RoleDetailData] = role
         # 角色模版 ["temp_atk", "temp_life", "temp_def"]
-        self.char_template = char_template
+        self.char_template: Literal["temp_atk", "temp_life", "temp_def"] = char_template
         # 角色基础攻击力
         self.char_atk = char_atk
         # 角色基础生命值
@@ -213,6 +214,8 @@ class DamageAttribute:
         self.dmg_bonus = dmg_bonus
         # 伤害加深百分比
         self.dmg_deepen = dmg_deepen
+        # 易伤百分比
+        self.easy_damage = easy_damage
         # 暴击率
         self.crit_rate = crit_rate
         # 暴击伤害
@@ -230,7 +233,9 @@ class DamageAttribute:
         # 声骸技能id
         self.echo_id = echo_id
         # 角色属性 ["冷凝", "衍射", "导电", "热熔", "气动", "湮灭"]
-        self.char_attr = char_attr
+        self.char_attr: Optional[
+            Literal["冷凝", "衍射", "导电", "热熔", "气动", "湮灭"]
+        ] = char_attr
         # 角色属性伤害  attack_damage,hit_damage,skill_damage,liberation_damage,heal_bonus
         self.char_damage = char_damage
         # 协同攻击
@@ -342,7 +347,9 @@ class DamageAttribute:
         self.char_template = char_template
         return self
 
-    def set_char_attr(self, char_attr: str):
+    def set_char_attr(
+        self, char_attr: Literal["冷凝", "衍射", "导电", "热熔", "气动", "湮灭"]
+    ):
         self.char_attr = char_attr
         return self
 
@@ -486,6 +493,12 @@ class DamageAttribute:
     def add_dmg_deepen(self, dmg_deepen: float, title="", msg=""):
         """增加伤害加深百分比"""
         self.dmg_deepen += dmg_deepen
+        self.add_effect(title, msg)
+        return self
+
+    def add_easy_damage(self, easy_damage: float, title="", msg=""):
+        """增加易伤百分比"""
+        self.easy_damage += easy_damage
         self.add_effect(title, msg)
         return self
 
@@ -685,6 +698,7 @@ class DamageAttribute:
             * (1 + self.skill_ratio_in_skill_description)
             * (1 + self.dmg_bonus)
             * (1 + self.dmg_deepen)
+            * (1 + self.easy_damage)
             * self.valid_enemy_resistance
             * self.defense_ratio
             * self.crit_dmg
@@ -709,6 +723,7 @@ class DamageAttribute:
             * (1 + self.skill_ratio_in_skill_description)
             * (1 + self.dmg_bonus)
             * (1 + self.dmg_deepen)
+            * (1 + self.easy_damage)
             * self.valid_enemy_resistance
             * self.defense_ratio
             * (self.crit_rate * (self.crit_dmg - 1) + 1)

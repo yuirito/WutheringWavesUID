@@ -17,8 +17,42 @@ from ..utils.resource.RESOURCE_PATH import PLAYER_PATH
 from ..utils.util import get_version
 from ..utils.waves_api import waves_api
 from ..wutheringwaves_config import WutheringWavesConfig
-from . import waves_card_cache
 from .resource.constant import SPECIAL_CHAR_INT_ALL
+
+
+def is_use_global_semaphore() -> bool:
+    return WutheringWavesConfig.get_config("UseGlobalSemaphore").data or False
+
+
+def get_refresh_card_concurrency() -> int:
+    return WutheringWavesConfig.get_config("RefreshCardConcurrency").data or 2
+
+
+class SemaphoreManager:
+    def __init__(self):
+        self._last_config: int = get_refresh_card_concurrency()
+        self._semaphore: asyncio.Semaphore = asyncio.Semaphore(value=self._last_config)
+        self._semaphore_lock = asyncio.Lock()
+
+    async def get_semaphore(self) -> asyncio.Semaphore:
+        current_config = get_refresh_card_concurrency()
+
+        if is_use_global_semaphore():
+            return await self._get_semaphore(current_config)  # 全局模式
+        else:
+            return asyncio.Semaphore(value=current_config)  # 独立模式
+
+    async def _get_semaphore(self, current_config: int) -> asyncio.Semaphore:
+        if self._last_config != current_config:
+            async with self._semaphore_lock:
+                if self._last_config != current_config:
+                    self._semaphore = asyncio.Semaphore(value=current_config)
+                    self._last_config = current_config
+
+        return self._semaphore
+
+
+semaphore_manager = SemaphoreManager()
 
 
 async def send_card(
@@ -27,6 +61,8 @@ async def send_card(
     save_data: List,
     is_self_ck: bool = False,
     token: Optional[str] = "",
+    role_info: Optional[RoleList] = None,
+    waves_data: Optional[List] = None,
 ):
     waves_char_rank: Optional[List[WavesCharRank]] = None
 
@@ -35,18 +71,28 @@ async def send_card(
     if WavesToken:
         waves_char_rank = await get_waves_char_rank(uid, save_data, True)
 
-    await waves_card_cache.save_card(
-        uid, save_data, user_id, waves_char_rank, is_self_ck, token
-    )
-
-    if is_self_ck and token and waves_char_rank and WavesToken:
+    if (
+        is_self_ck
+        and token
+        and waves_char_rank
+        and WavesToken
+        and role_info
+        and waves_data
+        and user_id
+    ):
+        # 单角色上传排行
+        if len(waves_data) != 1 and len(role_info.roleList) != len(save_data):
+            logger.warning(
+                f"角色数量不一致，role_info.roleNum:{len(role_info.roleList)} != waves_char_rank:{len(save_data)}"
+            )
+            return
         succ, account_info = await waves_api.get_base_info(uid, token=token)
         if not succ:
             return account_info
         account_info = AccountBaseInfo.model_validate(account_info)
-        if account_info.roleNum != len(save_data):
+        if len(waves_data) != 1 and account_info.roleNum != len(save_data):
             logger.warning(
-                f"角色数量不一致，roleNum:{account_info.roleNum} != waves_char_rank:{len(save_data)}"
+                f"角色数量不一致，role_info.roleNum:{account_info.roleNum} != waves_char_rank:{len(save_data)}"
             )
             return
         metadata = {
@@ -67,6 +113,7 @@ async def save_card_info(
     user_id: str = "",
     is_self_ck: bool = False,
     token: str = "",
+    role_info: Optional[RoleList] = None,
 ):
     if len(waves_data) == 0:
         return
@@ -109,7 +156,7 @@ async def save_card_info(
 
     save_data = list(old_data.values())
 
-    await send_card(uid, user_id, save_data, is_self_ck, token)
+    await send_card(uid, user_id, save_data, is_self_ck, token, role_info, waves_data)
 
     try:
         async with aiofiles.open(path, "w", encoding="utf-8") as file:
@@ -129,6 +176,7 @@ async def refresh_char(
     ck: Optional[str] = None,  # type: ignore
     waves_map: Optional[Dict] = None,
     is_self_ck: bool = False,
+    refresh_type: Union[str, List[str]] = "all",
 ) -> Union[str, List]:
     waves_datas = []
     if not ck:
@@ -150,29 +198,41 @@ async def refresh_char(
         msg = f"鸣潮特征码[{uid}]获取数据失败\n1.是否注册过库街区\n2.库街区能否查询当前鸣潮特征码数据"
         return msg
 
+    semaphore = await semaphore_manager.get_semaphore()
+
     async def limited_get_role_detail_info(role_id, uid, ck):
         async with semaphore:
             return await waves_api.get_role_detail_info(role_id, uid, ck)
 
-    semaphore = asyncio.Semaphore(value=len(role_info.roleList))
     if is_self_ck:
         tasks = [
-            limited_get_role_detail_info(str(r.roleId), uid, ck)
+            limited_get_role_detail_info(f"{r.roleId}", uid, ck)
             for r in role_info.roleList
+            if refresh_type == "all"
+            or (isinstance(refresh_type, list) and f"{r.roleId}" in refresh_type)
         ]
     else:
         if role_info.showRoleIdList:
             tasks = [
-                limited_get_role_detail_info(str(r), uid, ck)
+                limited_get_role_detail_info(f"{r}", uid, ck)
                 for r in role_info.showRoleIdList
+                if refresh_type == "all"
+                or (isinstance(refresh_type, list) and f"{r}" in refresh_type)
             ]
         else:
             tasks = [
-                limited_get_role_detail_info(str(r.roleId), uid, ck)
+                limited_get_role_detail_info(f"{r.roleId}", uid, ck)
                 for r in role_info.roleList
+                if refresh_type == "all"
+                or (isinstance(refresh_type, list) and f"{r.roleId}" in refresh_type)
             ]
     results = await asyncio.gather(*tasks)
 
+    charId2chainNum: Dict[int, int] = {
+        r.roleId: r.chainUnlockNum
+        for r in role_info.roleList
+        if isinstance(r.chainUnlockNum, int)
+    }
     # 处理返回的数据
     for succ, role_detail_info in results:
         if (
@@ -191,6 +251,18 @@ async def refresh_char(
             del role_detail_info["weaponData"]["weapon"]["effectDescription"]
         except Exception as _:
             pass
+
+        # 修正共鸣链
+        try:
+            role_id = role_detail_info["role"]["roleId"]
+            for i in role_detail_info["chainList"]:
+                if i["order"] <= charId2chainNum[role_id]:
+                    i["unlocked"] = True
+                else:
+                    i["unlocked"] = False
+        except Exception as e:
+            logger.exception(f"{uid} 共鸣链修正失败", e)
+
         waves_datas.append(role_detail_info)
 
     await save_card_info(
@@ -200,9 +272,13 @@ async def refresh_char(
         user_id,
         is_self_ck=is_self_ck,
         token=ck,
+        role_info=role_info,
     )
 
     if not waves_datas:
-        return error_reply(WAVES_CODE_101)
+        if refresh_type == "all":
+            return error_reply(WAVES_CODE_101)
+        else:
+            return error_reply(code=-110, msg="库街区暂未查询到角色数据")
 
     return waves_datas
