@@ -111,7 +111,7 @@ def select_random_folders(num_folders: int) -> List[str]:
         return random.sample(all_folders, num_folders)
 
 
-@sv_fdst.on_command(("fdst", "涩图", "st"))
+@sv_fdst.on_command(("涩图", "st"))
 async def send_images(bot: Bot, ev: Event):
     try:
         # 解析图片数量
@@ -150,7 +150,7 @@ async def send_images(bot: Bot, ev: Event):
         await bot.send(f"发送图片时出错: {str(e)}")
 
 
-@sv_fdst_roll.on_command(("随机涩图", "roll涩图"))
+@sv_fdst_roll.on_command(("fdst","随机涩图", "roll涩图"))
 async def send_images_roll(bot: Bot, ev: Event):
     try:
         # 解析图片数量

@@ -477,16 +477,8 @@
     ]
   },
   "额外功能": {
-    "desc": "fdst n最近n天随机n张，今日涩图 m n最近一天每页n个第m页，随机涩图全图库roll",
+    "desc": "fdst随机涩图全图库roll 今日涩图 m n最近一天每页n个第m页分页返回，",
     "data": [
-      {
-        "name": "fdst",
-        "desc": "",
-        "eg": "fdst 5",
-        "need_ck": false,
-        "need_sk": false,
-        "need_admin": false
-      },
       {
         "name": "今日涩图",
         "desc": "",
@@ -496,9 +488,9 @@
         "need_admin": false
       },
       {
-        "name": "随机涩图",
+        "name": "fdst",
         "desc": "",
-        "eg": "随机涩图",
+        "eg": "fdst",
         "need_ck": false,
         "need_sk": false,
         "need_admin": false
