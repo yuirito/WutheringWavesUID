@@ -16,10 +16,15 @@ async def auto_signin():
         ck= w.cookie
         uid = w.uid
         did = w.did
-        msg.append(f"uid:{uid}签到结果："+game_signin(uid = uid, ck = ck, did = did))
-    result_msg = "自动签到结果：\n" + "\n".join(msg)
+        sign_result = game_signin(uid = uid, ck = ck, did = did)
+        if "失败" in sign_result:
+            msg.append(f"uid:{uid}签到结果："+sign_result)
+    if len(msg) == 0:
+        result_msg = "自动签到结果：\n" + "全部签到成功"
+    else:
+        result_msg = "自动签到结果失败信息：\n" + "\n".join(msg)
 
-    notify_groups = ["718927461","594918736"]
+    notify_groups = ["718927461","594918736","749047576"]
     for gp in notify_groups:
         for bot_id in gss.active_bot:
             await gss.active_bot[bot_id].target_send(
