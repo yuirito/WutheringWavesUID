@@ -8,7 +8,7 @@ from gsuid_core.models import Event
 from ..utils.database.models import  WavesUser
 sv_kuro_sign_in = SV("库街区签到")
 
-@scheduler.scheduled_job("cron", hour=2, minute=25)
+@scheduler.scheduled_job("cron", hour=0, minute=5)
 async def auto_signin():
     wavesTokenUsers = await WavesUser.get_waves_all_user()
     msg: list[str] = []
